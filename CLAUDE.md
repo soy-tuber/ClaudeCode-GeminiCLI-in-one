@@ -7,15 +7,20 @@
   - Search: `SELECT source_table, substr(text,1,150) FROM memory_fts WHERE memory_fts MATCH 'keyword' LIMIT 10`
 - memory.dbスキーマ / memory.db schema:
   - `memories`: id, project, category, title, content, keywords, created_at, updated_at
-  - `services`: id, port, app_name, hostname, directory, framework, status, notes, caddy_port, tags
   - `rules`: id, scope, category, rule, severity, keywords, created_at, updated_at
   - `sessions`: id, session_id, project_path, started_at, summary, key_actions, files_modified
   - `memory_fts`: FTS5仮想テーブル (source_table, source_id, text) — 全テーブルを横断検索
     - FTS5 virtual table (source_table, source_id, text) — cross-table full-text search
-- 新サービス作成時 → services INSERT必須。新ルール発見時 → rules INSERT + FTS再構築
-  - When creating a new service → INSERT into services. When discovering a new rule → INSERT into rules + rebuild FTS.
-- DB情報(services, rules, memories)は変更即更新。古い情報は即座に修正せよ
-  - DB records (services, rules, memories) must be updated immediately on change. Fix stale info on sight.
+- インフラ情報は `~/Projects/Schedule/infra.db` (毎日5:50 cron自動更新)
+  - Infrastructure info lives in `~/Projects/Schedule/infra.db` (auto-updated daily at 5:50 by cron)
+  - スキーマ: services (port, caddy_port, app_name, hostname, directory, framework, systemd_unit, status, notes, updated_at)
+  - ソース: systemd units + /etc/cloudflared/config.yml + ss -tlnp の3点突合
+    - Sources: systemd units + /etc/cloudflared/config.yml + ss -tlnp cross-referenced
+  - 参照: `SELECT port, app_name, hostname, status FROM services WHERE status='active' ORDER BY port`
+- 新ルール発見時 → memory.db の rules INSERT + FTS再構築
+  - When discovering a new rule → INSERT into memory.db rules + rebuild FTS.
+- DB情報(rules, memories)は変更即更新。古い情報は即座に修正せよ
+  - DB records (rules, memories) must be updated immediately on change. Fix stale info on sight.
 - ポートは `ss -tlnp | grep LISTEN` で実状確認してから決定。競合・横取り絶対禁止
   - Always check actual port usage with `ss -tlnp | grep LISTEN` before assigning. No conflicts. No hijacking.
 - 全サービスが本番環境。運用マニュアル: ~/Downloads/manuals/ACTIVE_OPERATIONS_MANUAL_LATEST.txt
@@ -31,11 +36,11 @@
 
 - 前処理（大量データの粗い抽出）: ローカルNemotron 9B（localhost:8000, 無制限, 速い, 精度低め）
   - Pre-processing (bulk rough extraction): Local Nemotron 9B (localhost:8000, unlimited, fast, lower accuracy)
-- 整理・品質向上（クリーニング・分類・補完）: Gemini CLI（無料枠を毎日使い切る, 高精度）
+- 整理・品質向上（クリーニング・分類・補完）: Gemini CLI（無料枚を毎日使い切る, 高精度）
   - Refinement (cleaning, classification, completion): Gemini CLI (burn through the free tier daily, high accuracy)
 - Gemini CLIにはDB+元データを渡して「自分で見て判断して直せ」と指示するのが効率的
   - Most efficient Gemini CLI pattern: hand it the DB + raw data and say "look at it yourself, judge, and fix it."
 - Claude Codeは設計・コード・アーキテクチャ判断担当。力仕事はNemotron/Geminiに回す
   - Claude Code handles design, code, and architecture decisions. Heavy lifting goes to Nemotron/Gemini.
-- Gemini CLI無料枠: 1日1,000リクエスト, 60RPM, 100万トークンコンテキスト。モデルはGemini 3.1 Pro。毎日使い切れ
+- Gemini CLI無料枚: 1日1,000リクエスト, 60RPM, 100万トークンコンテキスト。モデルはGemini 3.1 Pro。毎日使い切れ
   - Gemini CLI free tier: 1,000 req/day, 60 RPM, 1M token context. Model: Gemini 3.1 Pro. Use it all, every day.

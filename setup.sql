@@ -1,5 +1,7 @@
 -- memory.db setup for Claude Code
 -- Run: sqlite3 ~/.claude/memory.db < setup.sql
+-- Note: services table has been moved to ~/Projects/Schedule/infra.db
+--       (auto-updated by infra_sync.py via cron)
 
 CREATE TABLE IF NOT EXISTS memories (
     id INTEGER PRIMARY KEY,
@@ -10,19 +12,6 @@ CREATE TABLE IF NOT EXISTS memories (
     keywords TEXT,
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now'))
-);
-
-CREATE TABLE IF NOT EXISTS services (
-    id INTEGER PRIMARY KEY,
-    port INTEGER NOT NULL UNIQUE,
-    app_name TEXT NOT NULL,
-    hostname TEXT,
-    directory TEXT,
-    framework TEXT,
-    status TEXT DEFAULT 'active',
-    notes TEXT,
-    caddy_port INTEGER,
-    tags TEXT
 );
 
 CREATE TABLE IF NOT EXISTS rules (
@@ -58,9 +47,6 @@ CREATE VIRTUAL TABLE IF NOT EXISTS memory_fts USING fts5(
 CREATE INDEX IF NOT EXISTS idx_memories_project ON memories(project);
 CREATE INDEX IF NOT EXISTS idx_memories_category ON memories(category);
 CREATE INDEX IF NOT EXISTS idx_memories_keywords ON memories(keywords);
-CREATE INDEX IF NOT EXISTS idx_services_port ON services(port);
-CREATE INDEX IF NOT EXISTS idx_services_status ON services(status);
-CREATE INDEX IF NOT EXISTS idx_services_tags ON services(tags);
 CREATE INDEX IF NOT EXISTS idx_rules_scope ON rules(scope);
 CREATE INDEX IF NOT EXISTS idx_rules_category ON rules(category);
 CREATE INDEX IF NOT EXISTS idx_rules_keywords ON rules(keywords);
