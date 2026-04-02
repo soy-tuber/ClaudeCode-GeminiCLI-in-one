@@ -97,6 +97,57 @@ Edit both files to match your environment:
 - The most important rule. Prevents AI agents from over-engineering.
 - 最も重要なルール。AIエージェントの過剰エンジニアリングを防ぐ。
 
+## Appendix: Gemini CLI + Google Apps Script (clasp MCP)
+
+Gemini CLI から clasp MCP を使うと、GAS プロジェクトを自然言語で操作できる。
+
+### Setup
+
+```bash
+# 1. Apps Script API を有効化
+#    https://script.google.com/home/usersettings → API アクセス ON
+
+# 2. clasp ログイン
+npx @google/clasp login
+
+# 3. ~/.gemini/settings.json に追加
+```
+
+```json
+{
+  "mcpServers": {
+    "clasp": {
+      "command": "npx",
+      "args": ["-y", "@google/clasp", "mcp"]
+    }
+  }
+}
+```
+
+```bash
+# 4. 動作確認: Gemini CLI で /mcp list → clasp が Ready (5 tools) ならOK
+```
+
+### Available Tools
+
+| Tool | Description |
+|------|-------------|
+| `mcp_clasp_list_projects` | GASプロジェクト一覧 |
+| `mcp_clasp_clone_project` | プロジェクトをクローン |
+| `mcp_clasp_pull_files` | コードを取得 |
+| `mcp_clasp_push_files` | コードをデプロイ |
+| `mcp_clasp_create_project` | 新規プロジェクト作成 |
+
+### Usage Examples
+
+```
+「GASプロジェクトの一覧を見せて」
+「プロジェクト"現場DB"のコードをpullして」
+「doPost関数にエラーハンドリングを追加してpushして」
+```
+
+> `gemini extensions install @google/clasp` でもインストール可能。
+
 ## License
 
 MIT
